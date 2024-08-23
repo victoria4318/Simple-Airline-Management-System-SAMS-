@@ -23,6 +23,7 @@ drop function if exists leg_time;
 delimiter //
 create function leg_time (ip_distance integer, ip_speed integer)
 	returns time reads sql data
+-- start of my code
 begin
 	declare total_time decimal(10,2);
     declare hours, minutes integer default 0;
@@ -31,6 +32,7 @@ begin
     set minutes = truncate((total_time - hours) * 60, 0);
     return maketime(hours, minutes, 0);
 end //
+-- end of my code
 delimiter ;
 
 -- [1] add_airplane()
@@ -48,6 +50,8 @@ create procedure add_airplane (in p_airlineID varchar(50), in p_tailNumber varch
 	in p_seatCapacity integer, in p_speed integer, in p_locationID varchar(50),
     in p_planeType varchar(100), in p_skids boolean, in p_propellers integer,
     in p_jetEngines integer)
+
+-- start of my code
 sp_main: begin
 	if p_locationID not in (select locID from location) and
        p_speed > 0 and
@@ -57,6 +61,7 @@ sp_main: begin
 		insert into airplane values (p_airlineID, p_tailNumber, p_seatCapacity, p_speed, p_locationID, p_planeType, p_skids, p_propellers, p_jetEngines);
 	end if;
 end //
+-- end of my code
 delimiter ;
 
 -- [2] add_airport()
@@ -70,12 +75,15 @@ drop procedure if exists add_airport;
 delimiter //
 create procedure add_airport (in p_airportID char(3), in p_airportName varchar(200),
     in p_city varchar(100), in p_state varchar(100), in p_country char(3), in p_locationID varchar(50))
+
+-- start of my code
 sp_main: begin
 	if p_locationID not in (select locID from location) and 
 		p_airportID not in (select airportID from airport) then
 		insert into airport values (p_airportID, p_airportName, p_city, p_state, p_country, p_locationID);
     end if;
 end //
+-- end of my code
 delimiter ;
 
 -- [3] offer_flight()
@@ -92,6 +100,8 @@ delimiter //
 create procedure offer_flight (in p_flightID varchar(50), in p_routeID varchar(50),
     in p_supportAirline varchar(50), in p_supportTail varchar(50), in p_progress integer,
     in p_nextTime time, in p_cost integer)
+
+-- start of my code
 sp_main: begin
 	if concat(p_supportAirline, p_supportTail) not in (select concat(support_airline, support_tail) from flight) and 
 	   p_progress = (select max(sequence) from route_path where p_routeID = routeID) and
@@ -99,6 +109,7 @@ sp_main: begin
        insert into flight values (p_flightID, p_routeID, p_supportAirline, p_supportTail, p_progress, 'on_ground', p_nextTime, p_cost);
     end if;
 end //
+-- end of my code
 delimiter ;
 
 -- [4] flight_landing()
@@ -111,6 +122,8 @@ of travel.
 drop procedure if exists flight_landing;
 delimiter //
 create procedure flight_landing (in p_flightID varchar(50))
+
+-- start of my code
 sp_main: begin
     update flight
     set flight_status = 'on_ground',
@@ -118,6 +131,7 @@ sp_main: begin
     where 
         flightID = p_flightID;
 end //
+-- end of my code
 delimiter ;
 
 -- [5] retire_flight()
@@ -129,6 +143,8 @@ end of its route. */
 drop procedure if exists retire_flight;
 delimiter //
 create procedure retire_flight (in p_flightID varchar(50))
+
+-- start of my code
 sp_main: begin
 	if (select flight_status from flight where flightID = p_flightID) = 'on_ground' and 
        ((select progress from flight where flightID = p_flightID) = 0 or 
@@ -137,4 +153,5 @@ sp_main: begin
         delete from flight where flightID = p_flightID;
     end if;
 end //
+-- end of my code
 delimiter ;
